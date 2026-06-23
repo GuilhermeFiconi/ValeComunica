@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Protótipo Conversacional Executivo - Vale & Blip</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ 
+ <style>
+ :root {
+ /* Paleta Corporativa Vale */
+ --vale-green: #007A5E;
+ --vale-green-dark: #004D3A;
+ --vale-green-light: #E0F2EE;
+ --vale-yellow: #FFB81C;
+ --azul-blip: #0091FF;
+ --dark-bg: #111827;
+ --bg-whatsapp: #efeae2;
+ --balao-bot: #ffffff;
+ --balao-user: #d9fdd3;
+ --txt-main: #111b21;
+ }
+
+ * {
+ box-sizing: border-box;
+ margin: 0;
+ padding: 0;
+ font-family: 'Inter', sans-serif;
+ }
+
+ body {
+ background: linear-gradient(135deg, var(--dark-bg) 0%, #1f2937 100%);
+ color: #ffffff;
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ padding: 20px;
+ }
+
+ /* Header com Logos Oficiais */
+ header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ width: 100%;
+ max-width: 1100px;
+ padding: 15px 35px;
+ background: rgba(255, 255, 255, 0.05);
+ border-radius: 16px;
+ backdrop-filter: blur(10px);
+ border: 1px solid rgba(255, 255, 255, 0.1);
+ margin-bottom: 20px;
+ }
+
+ .logo-vale { height: 40px; object-fit: contain; }
+ .logo-blip { height: 35px; object-fit: contain; }
+
+ /* Layout Principal */
+ main {
+ display: flex; width: 100%; max-width: 1100px; gap: 30px;
+ justify-content: center; align-items: flex-start;
+ }
+
+ /* Painel de Controle Lateral */
+ .control-panel {
+ flex: 1; background: rgba(255, 255, 255, 0.05); padding: 25px;
+ border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);
+ max-height: 750px; overflow-y: auto;
+ }
+ 
+ .control-panel::-webkit-scrollbar { width: 6px; }
+ .control-panel::-webkit-scrollbar-track { background: transparent; }
+ .control-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+ .control-panel h2 { font-size: 1.3rem; margin-bottom: 10px; color: var(--vale-yellow); font-weight: 600; }
+ .control-panel > p { font-size: 0.9rem; color: #9ca3af; margin-bottom: 20px; line-height: 1.5; }
+
+ .journey-btn {
+ width: 100%; padding: 15px; background: rgba(255, 255, 255, 0.04);
+ border: 2px solid transparent; border-radius: 12px; color: #fff;
+ text-align: left; cursor: pointer; transition: all 0.3s ease; margin-bottom: 12px;
+ }
+ .journey-btn:hover { background: rgba(255, 255, 255, 0.1); }
+ .journey-btn.active { border-color: var(--vale-green); background: rgba(0, 122, 94, 0.15); }
+ .journey-btn h3 { font-size: 0.95rem; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+ .journey-btn p { font-size: 0.8rem; color: #9ca3af; margin-bottom: 0; line-height: 1.4; }
+
+ /* Pitch para Diretoria (KPIs) */
+ .board-pitch {
+ margin-top: 12px; padding: 10px 12px; background: rgba(0,0,0,0.3);
+ border-left: 3px solid var(--vale-yellow); border-radius: 4px;
+ font-size: 0.75rem; color: #d1d5db; line-height: 1.4;
+ }
+ .board-pitch strong { color: var(--vale-yellow); display: block; margin-bottom: 4px; font-size: 0.8rem;}
+
+ .reset-btn {
+ margin-top: 10px; width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.2);
+ color: #d1d5db; padding: 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+ cursor: pointer; transition: all 0.2s; text-align: center;
+ }
+ .reset-btn:hover { color: white; border-color: white; background: rgba(255,255,255,0.05); }
+
+ /* Simulador de Smartphone */
+ .phone-container {
+ width: 380px; height: 720px; background: #000000; border-radius: 44px;
+ padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+ border: 4px solid #374151; position: relative; flex-shrink: 0;
+ }
+ .phone-screen {
+ width: 100%; height: 100%; background: var(--bg-whatsapp);
+ border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; position: relative;
+ }
+
+ /* Topbar do WhatsApp */
+ .wa-header {
+ background: var(--vale-green); padding: 35px 15px 12px 15px;
+ display: flex; align-items: center; gap: 12px; color: white;
+ box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 2;
+ }
+ .wa-avatar {
+ width: 40px; height: 40px; background: white; border-radius: 50%;
+ display: flex; align-items: center; justify-content: center;
+ font-weight: 800; color: var(--vale-green); font-size: 1rem;
+ }
+ .wa-info h4 { font-size: 1rem; font-weight: 500; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;}
+ .wa-info p { font-size: 0.75rem; color: var(--vale-green-light); opacity: 0.9;}
+ .wa-badge { background: #25D366; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+ /* Corpo do Chat */
+ .wa-chat-body {
+ flex: 1; padding: 15px; overflow-y: auto; display: flex;
+ flex-direction: column; gap: 14px; scroll-behavior: smooth;
+ }
+
+ /* Balões de Mensagem */
+ .msg {
+ max-width: 88%; padding: 8px 12px; font-size: 0.9rem; position: relative;
+ line-height: 1.4; color: var(--txt-main); box-shadow: 0 1px 1.5px rgba(0,0,0,0.1);
+ }
+ .msg-bot { background: var(--balao-bot); align-self: flex-start; border-radius: 0px 12px 12px 12px; }
+ .msg-user { background: var(--balao-user); align-self: flex-end; border-radius: 12px 0px 12px 12px; }
+ .msg-time { font-size: 0.65rem; color: #8696a0; text-align: right; margin-top: 4px; display: block; }
+
+ /* Componentes Meta UI */
+ .meta-list-container {
+ margin-top: 8px; border-top: 1px solid #e9ecef; padding-top: 8px;
+ display: flex; flex-direction: column; gap: 4px;
+ }
+ .meta-list-header {
+ font-size: 0.75rem; font-weight: 600; color: #667781;
+ padding: 4px 0; text-transform: uppercase; letter-spacing: 0.5px;
+ }
+ .meta-menu-option {
+ background: #f8f9fa; border: 1px solid #e9ecef; padding: 12px;
+ border-radius: 8px; text-align: left; font-size: 0.85rem; color: #00a884;
+ font-weight: 500; cursor: pointer; transition: all 0.2s;
+ display: flex; justify-content: space-between; align-items: center;
+ }
+ .meta-menu-option:hover { background: #e6f2ed; border-color: #00a884; }
+ .meta-menu-option::after { content: "➔"; font-size: 0.75rem; opacity: 0.7; }
+
+ .meta-buttons-inline {
+ display: flex; gap: 6px; margin-top: 8px; border-top: 1px solid #e9ecef;
+ padding-top: 8px; flex-wrap: wrap;
+ }
+ .meta-btn-quick {
+ flex: 1; min-width: 80px; background: #ffffff; color: #00a884;
+ border: 1px solid #e9ecef; padding: 10px 8px; border-radius: 8px;
+ font-weight: 500; font-size: 0.85rem; cursor: pointer; text-align: center;
+ box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;
+ }
+ .meta-btn-quick:hover { background: #f0f2f5; border-color: #00a884; }
+
+ .flow-btn {
+ display: block; width: 100%; background: #ffffff; color: #111b21;
+ border: 1px solid #e9ecef; padding: 12px; border-radius: 8px;
+ font-weight: 600; font-size: 0.9rem; cursor: pointer; text-align: center;
+ margin-top: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; gap: 6px;
+ }
+ .flow-btn svg { width: 16px; height: 16px; fill: #667781;}
+ .flow-btn:hover { background: #f8f9fa; }
+
+ /* WhatsApp Flows Overlay Simulador */
+ .flows-overlay {
+ display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+ background: rgba(0,0,0,0.4); z-index: 100; flex-direction: column; justify-content: flex-end;
+ }
+ .flows-sheet {
+ background: #ffffff; border-radius: 16px 16px 0 0; padding: 20px;
+ animation: slideUp 0.3s ease-out; box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+ }
+ @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+ .flow-input {
+ width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #d1d5db;
+ border-radius: 8px; font-size: 14px; color: #374151; background: #f9fafb;
+ outline: none;
+ }
+ .flow-input:focus { border-color: var(--vale-green); background: #ffffff; }
+ .flow-submit {
+ width: 100%; background: var(--vale-green); color: white; border: none;
+ padding: 14px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer;
+ }
+ .flow-cancel {
+ width: 100%; background: transparent; border: none; color: #6b7280;
+ padding: 10px; margin-top: 5px; font-size: 13px; font-weight: 500; cursor: pointer;
+ }
+
+ /* Mídia Mockups */
+ .img-preview {
+ width: 100%; border-radius: 8px; margin-bottom: 4px; overflow: hidden;
+ border: 1px solid #e9ecef; display: flex; justify-content: center; align-items: center;
+ background: #f0f2f5; padding: 10px;
+ }
+
+ /* Footer Input */
+ .wa-footer {
+ background: #f0f2f5; padding: 10px; display: flex; align-items: center; gap: 10px; z-index: 2;
+ }
+ .wa-input-mock { flex: 1; background: white; padding: 10px 15px; border-radius: 20px; font-size: 0.9rem; color: #667781; }
+ .wa-mic-mock {
+ width: 38px; height: 38px; background: var(--vale-green); border-radius: 50%;
+ display: flex; align-items: center; justify-content: center; color: white;
+ }
+ </style>
+</head>
+<body>
+
+ <header>
+ <img src="Logotipo_Vale.svg.png" alt="Vale" class="logo-vale">
+ <div class="logo-blip-container">
+ <img src="Marca-Blip-_blue-black-2.png" alt="Blip" class="logo-blip">
+ </div>
+ </header>
+
+ <main>
+ <div class="control-panel">
+ <h2>Orquestração Estratégica (C-Level)</h2>
+ <p>Simulações de altíssima conversão utilizando diretrizes e componentes visuais nativos da Meta (API Oficial).</p>
+ 
+ <button class="journey-btn active" onclick="switchJourney('logistica')">
+ <h3>🚚 1. Torre de Controle Logística</h3>
+ <p>Notificação ativa (HSM) com integração nativa via WhatsApp Flows.</p>
+ <div class="board-pitch">
+ <strong>🎯 Impacto Esperado:</strong> Redução de 45% no tempo de fila de balança, eliminação do papel e automatização total do Check-in no ERP.
+ </div>
+ </button>
+
+ <button class="journey-btn" onclick="switchJourney('esg')">
+ <h3>🌱 2. Alerta Comunitário (ESG)</h3>
+ <p>Atendimento humanizado com Menu e captura de evidências.</p>
+ <div class="board-pitch">
+ <strong>🎯 Impacto Esperado:</strong> Elevação do SLA de compliance ambiental. Coleta de evidências geolocalizadas sem fricção para a comunidade.
+ </div>
+ </button>
+
+ <button class="journey-btn" onclick="switchJourney('manutencao')">
+ <h3>⚙️ 3. Copiloto de Manutenção</h3>
+ <p>Análise RAG de falhas via IA Generativa processando manuais CAT.</p>
+ <div class="board-pitch">
+ <strong>🎯 Impacto Esperado:</strong> Aumento do FCR (First Contact Resolution) no campo. A máquina parada volta a operar minutos mais rápido com o diagnóstico via IA.
+ </div>
+ </button>
+
+ <button class="journey-btn" onclick="switchJourney('etica')">
+ <h3>🛡️ 4. Canal de Ética (Compliance)</h3>
+ <p>Triagem com WhatsApp Flow restrito e opção de denúncia anônima.</p>
+ <div class="board-pitch">
+ <strong>🎯 Impacto Esperado:</strong> Aumento na taxa de adesão de denúncias ao trocar formulários web difíceis por um fluxo 100% familiar, criptografado e condicional.
+ </div>
+ </button>
+
+ <button class="reset-btn" onclick="resetChat()">🔄 Reiniciar Jornada Atual</button>
+ </div>
+
+ <div class="phone-container">
+ <div class="phone-screen">
+ 
+ <div class="wa-header">
+ <div class="wa-avatar">V</div>
+ <div class="wa-info">
+ <h4>Vale Oficial <span class="wa-badge"></span></h4>
+ <p>Conta comercial oficial</p>
+ </div>
+ </div>
+
+ <div class="wa-chat-body" id="chatBody"></div>
+
+ <div class="wa-footer">
+ <div class="wa-input-mock">Mensagem</div>
+ <div class="wa-mic-mock">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+ </div>
+ </div>
+
+ <!-- Simulador Overlay do WhatsApp Flows -->
+ <div class="flows-overlay" id="flowsOverlay">
+ <div class="flows-sheet" id="flowsBody">
+ <!-- Conteúdo Injetado via JS -->
+ </div>
+ </div>
+
+ </div>
+ </div>
+ </main>
+
+ <script>
+ const journeys = {
+ logistica: [
+ {
+ type: 'bot',
+ text: '🚨 <b>Notificação de Viagem - Vale</b><br><br>Olá, motorista! Identificamos que você possui um carregamento agendado para hoje na unidade de Carajás.<br><br>Você já está a caminho da unidade?',
+ buttons: [
+ { text: '👍 Sim, a caminho', next: 1 },
+ { text: '⏱️ Estou atrasado', next: null }
+ ]
+ },
+ {
+ type: 'bot',
+ text: 'Perfeito! Para agilizar sua entrada e evitar filas na balança, realize seu Check-in Digital antecipado.<br><br>Clique no botão abaixo para preencher os dados da viagem (Placa e Nota Fiscal):',
+ flowButton: { text: 'Preencher Dados de Acesso', type: 'logistica', next: 2 }
+ },
+ {
+ type: 'user',
+ text: '<i>Formulário Preenchido e Enviado</i> 📄'
+ },
+ {
+ type: 'bot',
+ text: 'Validando dados no ERP... 🔄',
+ actionSim: () => {
+ setTimeout(() => {
+ sendBotMessage("✅ <b>Check-in Aprovado!</b><br><br>Dados da NF e Placa conferidos com sucesso. Apresente o QR Code abaixo diretamente na leitora da Portaria 3.<br><br>Boa viagem com segurança!", null, null, null, true);
+ }, 2000);
+ }
+ }
+ ],
+ esg: [
+ {
+ type: 'bot',
+ text: 'Olá! Seja bem-vindo ao canal oficial da <b>Comunidade Vale</b>. 🌱<br><br>Estamos aqui para ouvir você. Como podemos ajudar hoje?',
+ listMenu: {
+ header: 'Menu da Comunidade',
+ options: [
+ { text: '📢 Teste de Sirenes', next: null },
+ { text: '🗣️ Ouvidoria Ambiental', next: 1 },
+ { text: '🤝 Projetos Sociais', next: null }
+ ]
+ }
+ },
+ {
+ type: 'bot',
+ text: '<b>Ouvidoria Ambiental Vale</b><br><br>Este é um espaço seguro. Para podermos investigar e atuar o mais rápido possível, por favor, envie um <b>áudio</b> explicando a situação ou uma <b>foto</b> do local.',
+ actionSim: () => {
+ setTimeout(() => {
+ sendUserImage();
+ setTimeout(() => {
+ sendBotMessage("Foto recebida com sucesso. Agradecemos o seu relato, ele é fundamental para nossa gestão ambiental.<br><br>Estou transferindo seu atendimento para um analista de Relacionamento Corporativo que irá analisar a imagem e prosseguir com você por aqui. Aguarde um instante. 👨‍💻");
+ }, 1500);
+ }, 2500);
+ }
+ }
+ ],
+ manutencao: [
+ {
+ type: 'bot',
+ text: 'Olá, Mecânico! Sou o <b>Copiloto de Manutenção Vale</b> ⚙️.<br><br>Estou conectado aos manuais técnicos dos nossos equipamentos. Qual o modelo da máquina e o código de falha que você está enfrentando?',
+ actionSim: () => {
+ setTimeout(() => {
+ sendUserMessage("Código de falha E-404 no caminhão fora de estrada CAT");
+ setTimeout(() => {
+ sendBotMessage("Analisando manuais da frota Caterpillar... 🧠⚙️", null, null, () => {
+ setTimeout(() => {
+ sendBotMessage("<b>Diagnóstico (Caminhão CAT): Falha E-404</b><br><br>Este código indica <b>baixa pressão no sistema hidráulico de elevação da caçamba</b>.<br><br><b>Ação Imediata Sugerida:</b><br>1. Verifique o nível do fluido hidráulico no visor traseiro.<br>2. Inspecione a válvula de alívio principal quanto a obstruções.<br><br>Como deseja prosseguir?", null, [
+ { text: '📦 Solicitar Peça', next: 1 },
+ { text: '👷 Falar com Engenheiro', next: null }
+ ]);
+ }, 2500);
+ });
+ }, 1500);
+ }, 2000);
+ }
+ },
+ {
+ type: 'bot',
+ text: 'Abrindo requisição no sistema de suprimentos (SAP). Por favor, informe o Part Number da válvula de alívio.'
+ }
+ ],
+ etica: [
+ {
+ type: 'bot',
+ text: 'Olá. Você acessou o <b>Canal de Ética e Denúncias Vale</b>. 🛡️<br><br>Garantimos absoluto sigilo, acolhimento e proteção total contra retaliações.<br><br>Qual a natureza da situação que deseja relatar?',
+ listMenu: {
+ header: 'Classificação do Relato',
+ options: [
+ { text: 'Assédio Moral / Sexual', next: 1 },
+ { text: 'Fraude ou Corrupção', next: 1 },
+ { text: 'Segurança no Trabalho', next: 1 },
+ { text: 'Outros desvios éticos', next: 1 }
+ ]
+ }
+ },
+ {
+ type: 'bot',
+ text: 'Entendido. Lamento muito que isso tenha ocorrido.<br><br>Para garantir a lisura da investigação, você pode optar por relatar anonimamente ou validar seus dados corporativos.<br><br>Como deseja prosseguir?',
+ buttons: [
+ { text: '🕵️ Seguir Anônimo', next: 4 }, // Vai direto para o relato anônimo
+ { text: '👤 Me Identificar', next: 2 } // Exige WhatsApp Flow de Identificação
+ ]
+ },
+ {
+ type: 'bot',
+ text: 'Agradecemos a transparência. Por favor, clique no botão abaixo e preencha o formulário seguro com sua matrícula e data de admissão. Estes dados são confidenciais.',
+ flowButton: { text: 'Preencher Identificação', type: 'etica', next: 3 }
+ },
+ {
+ type: 'bot',
+ text: 'Validação de vínculo concluída com sucesso. ✅<br><br>Agora, por favor, envie um <b>áudio</b> ou escreva um <b>texto</b> longo descrevendo o caso detalhadamente (pessoas envolvidas, data, setor e evidências). O seu relato só será solicitado e processado após essa etapa de identificação.',
+ actionSim: () => {
+ setTimeout(() => {
+ sendUserMessage("Gostaria de denunciar um caso grave de assédio moral e pressão psicológica que ocorreu ontem com a minha equipe no setor administrativo...");
+ setTimeout(() => {
+ currentStep = 5; 
+ renderStep();
+ }, 1800);
+ }, 3000);
+ }
+ },
+ { 
+ type: 'bot',
+ text: 'Opção de anonimato respeitada. 🕵️<br><br>Por favor, envie um <b>áudio</b> ou escreva um <b>texto</b> descrevendo o caso detalhadamente (quem estava envolvido, quando ocorreu, setor e demais evidências importantes).',
+ actionSim: () => {
+ setTimeout(() => {
+ sendUserMessage("Preciso fazer um relato anônimo sobre pressão abusiva e indevida de metas que está ocorrendo na nossa equipe durante os turnos...");
+ setTimeout(() => {
+ currentStep = 5; 
+ renderStep();
+ }, 1800);
+ }, 3000);
+ }
+ },
+ {
+ type: 'bot',
+ text: '<b>Relato Protegido!</b> 🔒<br><br>Recebemos sua mensagem e ela foi criptografada. O conteúdo já foi direcionado para a matriz do Comitê de Compliance e Conduta Ética.<br><br>Guarde o seu protocolo para acompanhar o andamento da investigação de forma segura: <b>#ETH-7749-VLE</b>'
+ }
+ ]
+ };
+
+ let currentJourneyId = 'logistica';
+ let currentStep = 0;
+
+ function switchJourney(key) {
+ currentJourneyId = key;
+ currentStep = 0;
+ document.querySelectorAll('.journey-btn').forEach(btn => btn.classList.remove('active'));
+ event.currentTarget.classList.add('active');
+ resetChat();
+ }
+
+ function resetChat() {
+ document.getElementById('chatBody').innerHTML = '';
+ currentStep = 0;
+ renderStep();
+ }
+
+ function renderStep() {
+ const journey = journeys[currentJourneyId];
+ if (currentStep >= journey.length) return;
+
+ const stepData = journey[currentStep];
+ if (stepData.type === 'bot') {
+ sendBotMessage(stepData.text, stepData.listMenu, stepData.buttons, stepData.actionSim, false, stepData.flowButton);
+ } else if (stepData.type === 'user') {
+ sendUserMessage(stepData.text);
+ if (stepData.actionSim) stepData.actionSim();
+ }
+ }
+
+ function sendBotMessage(htmlText, listMenu = null, buttons = null, callback = null, isQRCode = false, flowButton = null) {
+ const chatBody = document.getElementById('chatBody');
+ const msgDiv = document.createElement('div');
+ msgDiv.className = 'msg msg-bot';
+ 
+ let content = `<div>${htmlText}</div>`;
+ 
+ if (isQRCode) {
+ content += `
+ <div class="img-preview" style="margin-top: 10px;">
+ <svg width="120" height="120" viewBox="0 0 24 24" fill="var(--vale-green)">
+ <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 15h6v6H3v-6zm2 2v2h2v-2H5zm13-2h-2v2h2v-2zm-2 2h-2v2h2v-2zm2 2h-2v2h2v-2zm-2-6h2v2h-2v-2zm-4 4h2v2h-2v-2zm0-2h2v2h-2v-2zm-4 0h2v2h-2v-2zm0-2h2v2h-2v-2zm0 6h2v2h-2v-2zm4-8h6v2h-6V7zm2 2h2v2h-2V9zm-2 2h-2v2h2v-2z"/>
+ </svg>
+ </div>`;
+ }
+
+ if (flowButton) {
+ content += `<button class="flow-btn" onclick="openFlow('${flowButton.type}', ${flowButton.next})">
+ <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+ ${flowButton.text}
+ </button>`;
+ }
+
+ if (listMenu) {
+ content += `<div class="meta-list-container">`;
+ content += `<div class="meta-list-header">${listMenu.header}</div>`;
+ listMenu.options.forEach((opt) => {
+ content += `<div class="meta-menu-option" onclick="handleMenuSelection('${opt.text}', ${opt.next})">${opt.text}</div>`;
+ });
+ content += `</div>`;
+ }
+
+ if (buttons && buttons.length > 0) {
+ content += `<div class="meta-buttons-inline">`;
+ buttons.forEach((btn) => {
+ content += `<button class="meta-btn-quick" onclick="handleMenuSelection('${btn.text}', ${btn.next})">${btn.text}</button>`;
+ });
+ content += `</div>`;
+ }
+
+ const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+ content += `<span class="msg-time">${time}</span>`;
+ 
+ msgDiv.innerHTML = content;
+ chatBody.appendChild(msgDiv);
+ chatBody.scrollTop = chatBody.scrollHeight;
+
+ if (callback) callback();
+ }
+
+ function sendUserMessage(text) {
+ const chatBody = document.getElementById('chatBody');
+ const msgDiv = document.createElement('div');
+ msgDiv.className = 'msg msg-user';
+ 
+ const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+ msgDiv.innerHTML = `<div>${text}</div><span class="msg-time">${time}</span>`;
+ 
+ chatBody.appendChild(msgDiv);
+ chatBody.scrollTop = chatBody.scrollHeight;
+ }
+
+ function sendUserImage() {
+ const chatBody = document.getElementById('chatBody');
+ const msgDiv = document.createElement('div');
+ msgDiv.className = 'msg msg-user';
+ 
+ const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+ msgDiv.innerHTML = `
+ <div class="img-preview" style="background: #e5e7eb; padding: 0;">
+ <svg width="100%" height="120" viewBox="0 0 24 24" fill="#9ca3af" style="padding: 20px;">
+ <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+ </svg>
+ </div>
+ <span class="msg-time">${time}</span>`;
+ 
+ chatBody.appendChild(msgDiv);
+ chatBody.scrollTop = chatBody.scrollHeight;
+ }
+
+ function handleMenuSelection(text, nextStep) {
+ if(nextStep === null) return;
+ sendUserMessage(text);
+ currentStep = nextStep;
+ setTimeout(() => {
+ renderStep();
+ }, 800);
+ }
+
+ // Simulação Visual de WhatsApp Flows
+ function openFlow(flowType, nextStep) {
+ const overlay = document.getElementById('flowsOverlay');
+ const body = document.getElementById('flowsBody');
+ 
+ if(flowType === 'etica') {
+ body.innerHTML = `
+ <div style="font-weight: 700; font-size: 16px; margin-bottom: 5px; color: var(--txt-main);">Identificação Segura</div>
+ <p style="font-size: 12px; color: #6b7280; margin-bottom: 20px; line-height: 1.4;">Seus dados são criptografados e visíveis apenas ao Compliance.</p>
+ 
+ <label style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block;">Matrícula SAP</label>
+ <input type="number" placeholder="Ex: 849302" class="flow-input">
+ 
+ <label style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block;">Data de Admissão</label>
+ <input type="date" class="flow-input">
+ 
+ <button class="flow-submit" onclick="submitFlow(${nextStep})">Autenticar Cadastro</button>
+ <button class="flow-cancel" onclick="closeFlow()">Cancelar e Voltar</button>
+ `;
+ } else {
+ // Default / Logística
+ body.innerHTML = `
+ <div style="font-weight: 700; font-size: 16px; margin-bottom: 20px; color: var(--txt-main);">Check-in Digital</div>
+ <label style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block;">Placa do Veículo</label>
+ <input type="text" placeholder="ABC-1234" class="flow-input">
+ <label style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block;">Número da NF</label>
+ <input type="number" placeholder="000.000.000" class="flow-input">
+ <button class="flow-submit" onclick="submitFlow(${nextStep})">Gerar Acesso QR Code</button>
+ <button class="flow-cancel" onclick="closeFlow()">Cancelar</button>
+ `;
+ }
+ overlay.style.display = 'flex';
+ }
+
+ function submitFlow(nextStep) {
+ closeFlow();
+ handleMenuSelection('📄 Identificação Enviada', nextStep);
+ }
+
+ function closeFlow() {
+ document.getElementById('flowsOverlay').style.display = 'none';
+ }
+
+ // Inicialização
+ renderStep();
+ </script>
+</body>
+</html>
